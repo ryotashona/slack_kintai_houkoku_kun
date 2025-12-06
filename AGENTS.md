@@ -29,10 +29,10 @@ Slack RTM WebSocket -> RTMイベントハンドラ -> キーワードフィル�
 ### Event Flow
 1. `RTMClient`がBot TokenでSlackへ接続し、再接続ロジックを開始。
 2. `message`イベントを受信したら、`channel`と`.env`の`TARGET_CHANNEL`を比較。
-3. メッセージ本文に`TARGET_KEYWORDS`(カンマ区切り、当日日付含む文字列にも対応)のいずれかが含まれるかチェック。
-4. 該当した場合、`.env`の`REPLY_TEXT`をスレッド返信(`THREAD_REPLY=true`)または通常投稿として`WebClient.chat_postMessage`に送信。
+3. `TARGET_CHANNEL`で指定したチャネルの投稿を最新から遡り、本文に`TARGET_KEYWORDS`(カンマ区切り、当日日付含む文字列にも対応)のいずれかが含まれている起点メッセージを探す。途中に他ユーザーの通常投稿が挟まっていても、キーワード一致した直近メッセージを優先（例: 「今日の報告はここに」）。
+4. 対象メッセージが見つかったら、`.env`の`REPLY_TEXT`(またはSlashコマンド別テンプレート)をそのメッセージへのスレッド返信(`THREAD_REPLY=true`)として`WebClient.chat_postMessage`に送信。スレッド投稿できない場合のみ通常投稿にフォールバック。
 5. 返信後は`event['ts']`を記録し、同一イベント再処理をスキップ。
-6. Slashコマンド`/shukin_home`、`/shukin_office`、`/taikin`にも同様の返信ロジックを適用し、所定テンプレートを投稿する。
+6. Slashコマンド`/shukin_home`、`/shukin_office`、`/taikin`にも同じ探索ロジックを適用し、直近のキーワード一致メッセージ(例: 「今日の報告はここに」)へ`<@ユーザーID>`付きテンプレートを投稿する。
 
 ## Supported Commands
 - `/shukin_home`: 在宅出勤の勤怠報告テンプレートを投稿。
@@ -41,11 +41,17 @@ Slack RTM WebSocket -> RTMイベントハンドラ -> キーワードフィル�
 
 ## Environment (.env)
 ```
+# スラック側で作成したBotトークン
 SLACK_BOT_TOKEN=xoxb-...
+# 監視・返信対象のチャネルID
 TARGET_CHANNEL=C1234567890
-TARGET_KEYWORDS=勤怠報告,出勤
+# 起点メッセージを特定するキーワード群（例: 今日の報告はここに）
+TARGET_KEYWORDS=今日の報告はここに
+# 返信テンプレート（Slashコマンド別テンプレートがない場合に使用）
 REPLY_TEXT=定型返信テキスト
+# 出力ログレベル
 LOG_LEVEL=INFO
+# trueならスレッド返信、falseなら通常投稿
 THREAD_REPLY=true
 ```
 - `TARGET_KEYWORDS`はカンマ区切り。日付が固定ワードに含まれる場合は起動時に`YYYY-MM-DD`へ置換するヘルパーを検討。
