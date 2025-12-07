@@ -21,6 +21,7 @@ COMMAND_TEMPLATES: Dict[str, str] = {
 }
 
 ANCHOR_KEYWORDS = [
+    # Slack上で毎朝流れる「今日の報告」投稿。複数あればここへ追記する。
     "今日の報告はここに",
 ]
 
@@ -33,6 +34,7 @@ class BotSettings:
 
 
 def load_settings() -> BotSettings:
+    """Read environment variables and normalize settings."""
     target_channel = os.getenv("TARGET_CHANNEL")
     if not target_channel:
         raise RuntimeError("TARGET_CHANNEL is not set")
@@ -48,6 +50,8 @@ def load_settings() -> BotSettings:
 
 def register_handlers(app: App, settings: BotSettings) -> None:
     def command_handler(command_name: str):
+        # Slashコマンドごとにテンプレートだけ変わり、処理は共通。
+        # ボイラープレートを抑えるためクロージャで生成。
         template = COMMAND_TEMPLATES.get(command_name, "")
 
         def _handler(ack, body, respond, client: WebClient, logger):
@@ -65,7 +69,7 @@ def register_handlers(app: App, settings: BotSettings) -> None:
                 return
 
             anchor_ts = anchor.get("ts")
-            text = _build_command_text(template, user_id)
+            text = _build_reply_text(template, user_id)
             success = _post_reply(
                 client,
                 channel=settings.target_channel,
@@ -122,7 +126,8 @@ def _post_reply(client: WebClient, channel: str, text: str, thread_ts: Optional[
         return False
 
 
-def _build_command_text(template: str, user_id: Optional[str]) -> str:
+def _build_reply_text(template: str, user_id: Optional[str]) -> str:
+    """Return the final text by injecting <@user> mention when possible."""
     if not user_id:
         return template
 
