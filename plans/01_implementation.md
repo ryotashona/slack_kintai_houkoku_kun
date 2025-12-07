@@ -7,10 +7,10 @@
 - [x] `src/`配下に`app.py`、`logging_config.py`などの雛形を用意。
 
 ## 2. Bolt(Socket Mode)ボット実装
-- [ ] `src/app.py`でBoltアプリと`WebClient`の初期化、Socket Mode接続、再接続ロジックを実装。
-- [ ] 対象チャネルで最新の`TARGET_KEYWORDS`一致メッセージを検索するヘルパーを実装。
-- [ ] `/shukin_home`、`/shukin_office`、`/taikin`のSlashコマンドハンドラを追加し、テンプレート投稿処理をまとめる。
-- [ ] ログ出力を`logging_config`で設定（JSON/構造化ログ想定）。
+- [x] `src/app.py`でBoltアプリと`WebClient`の初期化、Socket Mode接続、再接続ロジックを実装。
+- [x] 対象チャネルで最新の`TARGET_KEYWORDS`一致メッセージを検索するヘルパーを実装。
+- [x] `/shukin_home`、`/shukin_office`、`/taikin`のSlashコマンドハンドラを追加し、テンプレート投稿処理をまとめる。
+- [x] ログ出力を`logging_config`で設定（JSON/構造化ログ想定）。
 
 ## 3. ドキュメント・テスト・検証
 - [ ] `README.md`にセットアップ方法、コマンド一覧、plan運用などを追記。

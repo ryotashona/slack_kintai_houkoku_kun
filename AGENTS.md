@@ -1,7 +1,7 @@
 # AGENTS
 
 ## Mission
-- Slackワークスペース内の指定チャネルで、当日同じキーワードを含むメッセージを検知すると、決められたテンプレートで即座に返信するSlack Botを提供する。
+- Slackワークスペース内の指定チャネルで、Slashコマンド入力をトリガーに当日の「今日の報告」メッセージへ即座にテンプレート投稿するSlack Botを提供する。
 - Slack Bolt(Socket Mode)で完結する「シンプル構成」「イベントドリブン動作」「Dockerで閉じた開発体験」を採用し、単体のプロジェクトとしても迷わない運用体験を担保する。
 
 ## Guiding Principles
@@ -28,11 +28,9 @@ Slack Socket Mode -> Boltアプリ -> キーワードフィルタ -> 返信メ�
 
 ### Event Flow
 1. BoltアプリがSocket Mode(App Level Token)でSlackへ接続し、再接続ロジックを開始。
-2. `message`イベントを受信したら、`channel`と`.env`の`TARGET_CHANNEL`を比較。
-3. `TARGET_CHANNEL`で指定したチャネルの投稿を最新から遡り、本文に`TARGET_KEYWORDS`(カンマ区切り、当日日付含む文字列にも対応)のいずれかが含まれている起点メッセージを探す。途中に他ユーザーの通常投稿が挟まっていても、キーワード一致した直近メッセージを優先（例: 「今日の報告はここに」）。
-4. 対象メッセージが見つかったら、`.env`の`REPLY_TEXT`(またはSlashコマンド別テンプレート)をそのメッセージへのスレッド返信(`THREAD_REPLY=true`)として`WebClient.chat_postMessage`に送信。スレッド投稿できない場合のみ通常投稿にフォールバック。
-5. 返信後は`event['ts']`を記録し、同一イベント再処理をスキップ。
-6. Slashコマンド`/shukin_home`、`/shukin_office`、`/taikin`にも同じ探索ロジックを適用し、直近のキーワード一致メッセージ(例: 「今日の報告はここに」)へ`<@ユーザーID>`付きテンプレートを投稿する。Socket ModeでもBoltの`app.command`で受信し、同じ処理系にルーティングする。
+2. Slashコマンド`/shukin_home`、`/shukin_office`、`/taikin`のいずれかを受信したら、`channel_id`と`.env`の`TARGET_CHANNEL`を比較。対象外チャネルからの呼び出しはエラー応答。
+3. `TARGET_CHANNEL`で指定したチャネルの投稿を最新から遡り、本文に固定キーワード（例: 「今日の報告はここに」）が含まれている起点メッセージを探す。途中に他ユーザーの通常投稿が挟まっていても、キーワード一致した直近メッセージを優先。
+4. 対象メッセージが見つかったら、コマンドごとに固定されたテンプレート(コード内`COMMAND_TEMPLATES`で管理)を、そのメッセージへのスレッド返信(`THREAD_REPLY=true`)として`WebClient.chat_postMessage`に送信。スレッド投稿できない場合のみ通常投稿にフォールバック。
 
 ## Supported Commands
 - `/shukin_home`: 在宅出勤の勤怠報告テンプレートを投稿。
@@ -47,16 +45,11 @@ SLACK_BOT_TOKEN=xoxb-...
 SLACK_APP_TOKEN=xapp-...
 # 監視・返信対象のチャネルID
 TARGET_CHANNEL=C1234567890
-# 起点メッセージを特定するキーワード群（例: 今日の報告はここに）
-TARGET_KEYWORDS=今日の報告はここに
-# 返信テンプレート（Slashコマンド別テンプレートがない場合に使用）
-REPLY_TEXT=定型返信テキスト
 # 出力ログレベル
 LOG_LEVEL=INFO
 # trueならスレッド返信、falseなら通常投稿
 THREAD_REPLY=true
 ```
-- `TARGET_KEYWORDS`はカンマ区切り。日付が固定ワードに含まれる場合は起動時に`YYYY-MM-DD`へ置換するヘルパーを検討。
 - `THREAD_REPLY`を`false`にすると通常メッセージで投稿。
 - Socket Modeの再接続間隔などを調整したい場合は、Boltの設定値を`.env`経由で受け取れるようにする。
 
