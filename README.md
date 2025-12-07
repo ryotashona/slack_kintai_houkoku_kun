@@ -1,5 +1,3 @@
-# ★開発途中〜★
-
 # slack_kintai_houkoku_kun
 
 Slack の特定チャネルで Slash コマンド(`/shukin_home`/`/shukin_office`/`/taikin`)を実行すると、
