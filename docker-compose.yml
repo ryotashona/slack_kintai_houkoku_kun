@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  slackbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    command: ["python", "-m", "src.app"]
+    volumes:
+      - ./src:/app/src
+    restart: unless-stopped

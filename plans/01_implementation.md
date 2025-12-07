@@ -1,10 +1,10 @@
 # Implementation Plan
 
 ## 1. 足場作成 (Scaffolding)
-- [ ] `.env.example`を追加し、`AGENTS.md`に記載した環境変数を定義。
-- [ ] Python依存関係用に`pyproject.toml`または`requirements.txt`を用意し、`slack_bolt`/`slack_sdk`など必要ライブラリを記述。
-- [ ] `Dockerfile`と`docker-compose.yml`を作成し、Python 3.13系イメージで`python -m src.app`が動くよう設定。
-- [ ] `src/`配下に`app.py`、`logging_config.py`などの雛形を用意。
+- [x] `.env.example`を追加し、`AGENTS.md`に記載した環境変数を定義。
+- [x] Python依存関係用に`pyproject.toml`または`requirements.txt`を用意し、`slack_bolt`/`slack_sdk`など必要ライブラリを記述。
+- [x] `Dockerfile`と`docker-compose.yml`を作成し、Python 3.13系イメージで`python -m src.app`が動くよう設定。
+- [x] `src/`配下に`app.py`、`logging_config.py`などの雛形を用意。
 
 ## 2. Bolt(Socket Mode)ボット実装
 - [ ] `src/app.py`でBoltアプリと`WebClient`の初期化、Socket Mode接続、再接続ロジックを実装。
