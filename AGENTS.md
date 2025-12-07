@@ -6,9 +6,9 @@
 
 ## Guiding Principles
 1. **単一責務**: コンテナはSlack Bolt(Socket Mode)によるイベント受信と返信処理だけに集中させる。外部DBに依存せず、必要な管理情報はインメモリまたは`data/`以下の軽量ファイルに限定する。
-2. **宣言的設定**: Slack Bot Token、対象チャネル、検知キーワード、返信内容などは`.env`から読み込み、Docker Composeの環境差し替えで容易に構成変更できるようにする。
-3. **観測可能性**: RTM接続状態、キーワードマッチ結果、返信の成功/失敗はINFO以上のログに出力し、`docker compose logs`だけで状況を把握できるようにする。
-4. **冪等な返信**: 同日の同一メッセージに重複返信しないよう、イベント`ts`と検知キーワードをキーにメモリ上のSetへ記録して再処理を防ぐ。
+2. **宣言的設定**: Slack Bot Tokenや対象チャネルIDなどは`.env`から読み込み、Docker Composeの環境差し替えで容易に構成変更できるようにする。テンプレート文面・キーワードはコード内の定数で管理する。
+3. **観測可能性**: Socket Mode接続状態、アンカー検索結果、返信の成功/失敗はINFO以上のログに出力し、`docker compose logs`だけで状況を把握できるようにする。
+4. **シンプルな運用**: 必要な情報はコード内の定数（`COMMAND_TEMPLATES`/`ANCHOR_KEYWORDS`など）で管理し、設定箇所がバラつかないようにする。
 
 ## Target Stack
 - **Language**: Python 3.13系（Slack SDK/Boltが対応している最新安定版）。
@@ -22,7 +22,7 @@ Slack Socket Mode -> Boltアプリ -> キーワードフィルタ -> 返信メ�
 ```
 
 ### Components
-1. **app**: `src/app.py`にBoltアプリのブートストラップを実装。Socket Modeで`message.channels`/slashコマンドイベントを購読し、対象チャネルとキーワードをチェックして返信する。
+1. **app**: `src/app.py`にBoltアプリのブートストラップを実装。Socket Modeでslashコマンドイベントを購読し、対象チャネルの「今日の報告」を探して返信する。
 2. **logging config**: `src/logging.py`でJSON/構造化ログ設定を提供し、接続状態・メッセージID・結果を一望できるようにする。
 3. **docker compose**: `docker-compose.yml`で`slackbot`サービスを定義し、`.env`を参照しつつ`python -m src.app`で起動する。HTTP待受は不要だが、BoltのSocketモード用の環境変数を渡す。
 
@@ -30,7 +30,7 @@ Slack Socket Mode -> Boltアプリ -> キーワードフィルタ -> 返信メ�
 1. BoltアプリがSocket Mode(App Level Token)でSlackへ接続し、再接続ロジックを開始。
 2. Slashコマンド`/shukin_home`、`/shukin_office`、`/taikin`のいずれかを受信したら、呼び出し元チャネルに関係なく`.env`の`TARGET_CHANNEL`を参照して投稿先を決定する。
 3. `TARGET_CHANNEL`で指定したチャネルの投稿を最新から遡り、本文に固定キーワード（例: 「今日の報告はここに」）が含まれている起点メッセージを探す。途中に他ユーザーの通常投稿が挟まっていても、キーワード一致した直近メッセージを優先。
-4. 対象メッセージが見つかったら、コマンドごとに固定されたテンプレート(コード内`COMMAND_TEMPLATES`で管理)を、そのメッセージへのスレッド返信(`THREAD_REPLY=true`)として`WebClient.chat_postMessage`に送信。スレッド投稿できない場合のみ通常投稿にフォールバック。
+4. 対象メッセージが見つかったら、コード内`COMMAND_TEMPLATES`で管理するテンプレートを、そのメッセージへのスレッド返信(`THREAD_REPLY=true`)として`WebClient.chat.postMessage`に送信。スレッド投稿できない場合のみ通常投稿にフォールバック。
 
 ## Supported Commands
 - `/shukin_home`: 在宅出勤の勤怠報告テンプレートを投稿。
@@ -73,11 +73,10 @@ services:
 1. `.env.example`を作成し、SlackアプリのBot Token・対象チャネルIDなどを設定。
 2. `docker compose up --build`でBolt(Socket Mode)アプリをローカル起動し、Slack管理画面でBot Token/App Tokenが有効か確認。
 3. ログを監視しつつ、対象チャネルでテストキーワードを送信して自動返信を確認。
-4. ビジネスロジックは`pytest`で単体テストし、キーワード判定や重複防止ロジック、RTMイベントハンドラのユニットテストをカバー。
+4. ビジネスロジックは`pytest`で単体テストし、キーワード判定やヘルパーロジックをカバー。
 5. コミットメッセージは日本語で記述し、変更内容が一目で分かる形にする。
 6. エージェント作業時は「plan作成 → 作業 → 作業履歴共有 → plan更新」の順で進捗を共有し、詳細は`plans/README.md`を参照する。コンテキストウィンドウをクリアする場合でも、同ファイルに沿ってPlanを維持すれば作業を継続できる。
 
 ## Open Questions / ToDo
 - 再接続やネットワーク断の際にどこまで自動復旧できるか。バックオフ戦略の要否を評価。
-- `TARGET_KEYWORDS`に当日日付をどう埋め込むか。環境変数テンプレート展開を導入するか検討。
 - 返信メッセージの柔軟なカスタム（Jinja2等）や、特定ユーザーの除外ロジックなどが必要か継続検討。
