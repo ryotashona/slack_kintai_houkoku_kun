@@ -28,7 +28,7 @@ Slack Socket Mode -> Boltアプリ -> キーワードフィルタ -> 返信メ�
 
 ### Event Flow
 1. BoltアプリがSocket Mode(App Level Token)でSlackへ接続し、再接続ロジックを開始。
-2. Slashコマンド`/shukin_home`、`/shukin_office`、`/taikin`のいずれかを受信したら、`channel_id`と`.env`の`TARGET_CHANNEL`を比較。対象外チャネルからの呼び出しはエラー応答。
+2. Slashコマンド`/shukin_home`、`/shukin_office`、`/taikin`のいずれかを受信したら、呼び出し元チャネルに関係なく`.env`の`TARGET_CHANNEL`を参照して投稿先を決定する。
 3. `TARGET_CHANNEL`で指定したチャネルの投稿を最新から遡り、本文に固定キーワード（例: 「今日の報告はここに」）が含まれている起点メッセージを探す。途中に他ユーザーの通常投稿が挟まっていても、キーワード一致した直近メッセージを優先。
 4. 対象メッセージが見つかったら、コマンドごとに固定されたテンプレート(コード内`COMMAND_TEMPLATES`で管理)を、そのメッセージへのスレッド返信(`THREAD_REPLY=true`)として`WebClient.chat_postMessage`に送信。スレッド投稿できない場合のみ通常投稿にフォールバック。
 

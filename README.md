@@ -32,7 +32,8 @@ docker compose -f docker-compose.test.yml run --rm tests
 ```
 
 ## Slash コマンドの使い方
-対象チャネル (`TARGET_CHANNEL`) で以下のコマンドを入力すると、直近の「今日の報告」投稿にスレッド返信します。
+どのチャネルでコマンドを実行しても、`TARGET_CHANNEL` に設定したチャネルへ投稿されます。
+直近の「今日の報告」投稿にスレッド返信します。
 - `/shukin_home`: 在宅勤務開始
 - `/shukin_office`: 出社して勤務開始
 - `/taikin`: 退勤報告

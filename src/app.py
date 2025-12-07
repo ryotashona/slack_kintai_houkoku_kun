@@ -22,7 +22,7 @@ COMMAND_TEMPLATES: Dict[str, str] = {
 
 ANCHOR_KEYWORDS = [
     # Slack上で毎朝流れる「今日の報告」投稿。複数あればここへ追記する。
-    "今日の報告はここに",
+    "今日の勤怠報告はこちら",
 ]
 
 
@@ -56,12 +56,7 @@ def register_handlers(app: App, settings: BotSettings) -> None:
 
         def _handler(ack, body, respond, client: WebClient, logger):
             ack()
-            channel_id = body.get("channel_id")
             user_id = body.get("user_id")
-
-            if channel_id != settings.target_channel:
-                respond(f"このコマンドは <#{settings.target_channel}> でのみ使用できます。")
-                return
 
             anchor = _find_anchor_message(client, settings.target_channel, settings.keywords, logger)
             if not anchor:
@@ -77,7 +72,7 @@ def register_handlers(app: App, settings: BotSettings) -> None:
                 text=text,
             )
             if success:
-                respond("報告を投稿しました。")
+                respond(f"<#{settings.target_channel}> に報告を投稿しました。")
             else:
                 respond("投稿に失敗しました。ログを確認してください。")
 
