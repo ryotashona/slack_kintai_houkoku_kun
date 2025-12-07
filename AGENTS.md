@@ -11,7 +11,7 @@
 4. **冪等な返信**: 同日の同一メッセージに重複返信しないよう、イベント`ts`と検知キーワードをキーにメモリ上のSetへ記録して再処理を防ぐ。
 
 ## Target Stack
-- **Language**: Python 3.12系（2024年時点の最新安定版）。
+- **Language**: Python 3.13系（Slack SDK/Boltが対応している最新安定版）。
 - **Framework/Library**: `slack_sdk`の`RTMClient`と`WebClient`。HTTPサーバーやBoltは使わない。
 - **Runtime**: Docker Composeで起動する常駐サービス。RTM WebSocket接続のみなのでポートの公開は不要。
 - **Storage**: 永続ボリュームは基本不要。必要なら`data/`以下にJSONキャッシュ等を置く程度。
