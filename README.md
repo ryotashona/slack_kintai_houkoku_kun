@@ -24,6 +24,13 @@ docker compose up --build
 ```
 起動後は Socket Mode で常時接続し、Slash コマンドを受け付けます。ログは `docker compose logs -f` で確認できます。
 
+## ローカルテスト
+アプリ本体とは別の Compose ファイルを用意しています。ソースをマウントした状態で pytest を実行できます。
+
+```bash
+docker compose -f docker-compose.test.yml run --rm tests
+```
+
 ## Slash コマンドの使い方
 対象チャネル (`TARGET_CHANNEL`) で以下のコマンドを入力すると、直近の「今日の報告」投稿にスレッド返信します。
 - `/shukin_home`: 在宅勤務開始
